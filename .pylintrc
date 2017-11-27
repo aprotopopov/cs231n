@@ -1,0 +1,45 @@
+[MASTER]
+
+# Add files or directories to the blacklist. They should be base names, not
+# paths.
+ignore=lifetimes
+
+# Use multiple processes to speed up Pylint.
+jobs=50
+
+
+[MESSAGES CONTROL]
+
+# R0902:Too many instance attributes
+# R0913:Too many arguments 
+# R0914:Too many local variables
+# C0103:invalid-name
+# C0413:Import should be placed at the top of the module
+# W1401:Anomalous backslash in string. String constant might be missing an r prefix
+# W0104:Statement seems to have no effect
+disable=R0902,R0913,R0914,C0103,C0413,W1401,W0104,W0311
+
+
+[REPORTS]
+
+# Template used to display messages. This is a python new-style format string
+# used to format the message information. See doc for all details
+msg-template={msg_id}:{line:3d},{column}: {obj}: {msg}
+
+# Tells whether to display a full report or only the messages
+reports=no
+
+
+[TYPECHECK]
+
+# List of class names for which member attributes should not be checked (useful
+# for classes with dynamically set attributes). This supports the use of
+# qualified names.
+ignored-classes=pyspark.sql.functions
+
+
+# List of module names for which member attributes should not be checked
+# (useful for modules/projects where namespaces are manipulated during runtime
+# and thus existing member attributes cannot be deduced by static analysis. It
+# supports qualified module names, as well as Unix pattern matching.
+ignored-modules = numpy, numpy.random
