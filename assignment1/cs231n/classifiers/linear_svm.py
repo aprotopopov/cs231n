@@ -66,7 +66,7 @@ def svm_loss_vectorized(W, X, y, reg):
   Inputs and outputs are the same as svm_loss_naive.
   """
   loss = 0.0
-  dW = np.zeros(W.shape) # initialize the gradient as zero
+  dW = np.zeros(W.shape)  # initialize the gradient as zero
 
   #############################################################################
   # TODO:                                                                     #
