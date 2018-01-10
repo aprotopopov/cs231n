@@ -90,7 +90,7 @@ def svm_loss_vectorized(W, X, y, reg):
   ##################
   # for j in xrange(num_classes):
   #   mask = np.where(margins[:, j] > 0, True, False)
-  #   # dW[:, j] += X[mask].sum(axis=0)
+  #   dW[:, j] += X[mask].sum(axis=0)
   #   for i in xrange(num_classes):
   #     dW[:, i] -= X[mask & (y == i)].sum(axis=0)
   ##################
