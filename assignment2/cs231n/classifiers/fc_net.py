@@ -47,7 +47,11 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W1' and 'b1' and second layer weights #
         # and biases using the keys 'W2' and 'b2'.                                 #
         ############################################################################
-        pass
+        std = weight_scale
+        self.params['W1'] = std * np.random.randn(input_dim, hidden_dim)
+        self.params['b1'] = np.zeros(hidden_dim)
+        self.params['W2'] = std * np.random.randn(hidden_dim, num_classes)
+        self.params['b2'] = np.zeros(num_classes)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -78,6 +82,13 @@ class TwoLayerNet(object):
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
         pass
+        out, cache = affine_relu_forward(
+            X, self.params['W1'], self.params['b1'])
+
+        scores, cache2 = affine_forward(
+            out, self.params['W2'], self.params['b2'])
+
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -98,6 +109,18 @@ class TwoLayerNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         pass
+        loss, dout = softmax_loss(scores, y)
+        # print(loss)
+        loss += 0.5 * self.reg * (np.sum(self.params['W1']**2) + np.sum(self.params['W2']**2))
+
+        dx2, dw2, db2 = affine_backward(dout, cache2)
+        dx1, dw1, db1 = affine_relu_backward(dx2, cache)
+
+        grads['W1'] = dw1 + self.reg * self.params['W1']
+        grads['b1'] = db1
+        grads['W2'] = dw2 + self.reg * self.params['W2']
+        grads['b2'] = db2
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
