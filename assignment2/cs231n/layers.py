@@ -1,4 +1,4 @@
-from builtins import range
+# from builtins import range
 import numpy as np
 
 
@@ -175,14 +175,29 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variance, storing your result in the running_mean and running_var   #
         # variables.                                                          #
         #######################################################################
+        # CHAINED version
         mean = np.mean(x, axis=0)
-        var = np.std(x, axis=0) ** 2
-        x_norm = (x - mean) / (var + eps) ** 0.5
-        out = gamma * x_norm + beta
+        x_centered = x - mean
+        num = x_centered
+        x_cent_squared = x_centered**2
+        var = x_cent_squared.sum(axis=0) / len(x)
+        den_val = var + eps
+        den = np.sqrt(den_val)
+        invden = 1 / den
+        x_norm = num * invden
+        mult = gamma * x_norm
+        out = mult + beta
+
+        # SHORT version
+        # mean = np.mean(x, axis=0)
+        # var = np.std(x, axis=0) ** 2
+        # x_norm = (x - mean) / (var + eps) ** 0.5
+        # out = gamma * x_norm + beta
 
         running_mean = momentum * running_mean + (1 - momentum) * mean
         running_var = momentum * running_var + (1 - momentum) * var
 
+        cache = x_norm, gamma, x_centered, den_val, den, num, invden 
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -230,7 +245,26 @@ def batchnorm_backward(dout, cache):
     # TODO: Implement the backward pass for batch normalization. Store the    #
     # results in the dx, dgamma, and dbeta variables.                         #
     ###########################################################################
-    pass
+
+    x_norm, gamma, x_centered, den_val, den, num, invden = cache
+    N = len(x_norm)
+    dbeta = 1 * dout.sum(axis=0)
+    dmult = 1 * dout
+    dgamma = (dmult * x_norm).sum(axis=0)
+
+    dx_norm = dmult * gamma
+    dnum = invden * dx_norm
+    dinvden = (num * dx_norm).sum(axis=0)
+    dden = (-1 / (den**2)) * dinvden
+    dden_val = 1 / (2 * np.sqrt(den_val)) * dden
+    dvar = 1 * dden_val
+    dx_cent_squared = 1 * dvar / N * np.ones((N, 1))
+    dx_centered = 2 * x_centered * dx_cent_squared
+    dx_centered += 1 * dnum
+    dx = 1 * dx_centered
+    dmean = -1 * dx_centered.sum(axis=0)
+    dx += 1 * np.ones((N, 1)) * dmean / N
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
