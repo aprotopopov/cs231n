@@ -191,7 +191,7 @@ class FullyConnectedNet(object):
                 zip(dims[:-1], dims[1:]), start=1):
             self.params[f'W{num}'] = std * np.random.randn(in_dim, out_dim)
             self.params[f'b{num}'] = np.zeros(out_dim)
-            if self.use_batchnorm:
+            if self.use_batchnorm and num < self.num_layers:
                 self.params[f'gamma{num}'] = np.ones(out_dim)
                 self.params[f'beta{num}'] = np.zeros(out_dim)
 
