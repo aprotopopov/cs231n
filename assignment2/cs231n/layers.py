@@ -189,6 +189,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         out = mult + beta
 
         # SHORT version
+        ###############
         # mean = np.mean(x, axis=0)
         # var = np.std(x, axis=0) ** 2
         # x_norm = (x - mean) / (var + eps) ** 0.5
@@ -197,7 +198,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         running_mean = momentum * running_mean + (1 - momentum) * mean
         running_var = momentum * running_var + (1 - momentum) * var
 
-        cache = x_norm, gamma, x_centered, den_val, den, num, invden 
+        cache = x_norm, gamma, x_centered, den_val, den, num, invden
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################

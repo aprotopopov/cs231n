@@ -87,7 +87,6 @@ class TwoLayerNet(object):
 
         scores, cache2 = affine_forward(
             out, self.params['W2'], self.params['b2'])
-
         
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -188,10 +187,13 @@ class FullyConnectedNet(object):
         ############################################################################
         std = weight_scale
         dims = [input_dim] + hidden_dims + [num_classes]
-        for num, (in_dim, out_dim) in enumerate(zip(dims[:-1], dims[1:])):
-            num += 1
+        for num, (in_dim, out_dim) in enumerate(
+                zip(dims[:-1], dims[1:]), start=1):
             self.params[f'W{num}'] = std * np.random.randn(in_dim, out_dim)
             self.params[f'b{num}'] = np.zeros(out_dim)
+            if self.use_batchnorm:
+                self.params[f'gamma{num}'] = np.ones(out_dim)
+                self.params[f'beta{num}'] = np.zeros(out_dim)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -252,14 +254,20 @@ class FullyConnectedNet(object):
         ############################################################################
         out = X
         cache_list = []
-        for num_layer in range(1, self.num_layers):
-            W, b = self.params[f'W{num_layer}'], self.params[f'b{num_layer}']
-            out, cache = affine_relu_forward(out, W, b)
+        for num in range(1, self.num_layers):
+            W, b = self.params[f'W{num}'], self.params[f'b{num}']
+            if self.use_batchnorm:
+                gamma = self.params[f'gamma{num}']
+                beta = self.params[f'beta{num}']
+                out, cache = affine_relu_bn_forward(
+                    out, W, b, gamma, beta, self.bn_params[num - 1])
+            else:
+                out, cache = affine_relu_forward(out, W, b)
             cache_list.append(cache)
-
+            # print(num, out.shape)
         num_last = self.num_layers
-        scores, cache = affine_forward(
-            out, self.params[f'W{num_last}'], self.params[f'b{num_last}'])
+        W, b = self.params[f'W{num_last}'], self.params[f'b{num_last}']
+        scores, cache = affine_forward(out, W, b)
         cache_list.append(cache)
 
         ############################################################################
@@ -285,7 +293,6 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dout = softmax_loss(scores, y)
-        # print(loss)
         for num in range(1, self.num_layers + 1):
             loss += 0.5 * self.reg * np.sum(self.params[f'W{num}']**2)
 
@@ -294,7 +301,14 @@ class FullyConnectedNet(object):
         grads[f'b{num_last}'] = db
 
         for num in range(self.num_layers - 1, 0, -1):
-            dout, dw, db = affine_relu_backward(dout, cache_list[num - 1])
+            if self.use_batchnorm:
+                dout, dw, db, dgamma, dbeta = affine_relu_bn_backward(
+                    dout, cache_list[num - 1])
+                grads[f'gamma{num}'] = dgamma               
+                grads[f'beta{num}'] = dbeta     
+            else:
+                dout, dw, db = affine_relu_backward(dout, cache_list[num - 1])
+
             grads[f'W{num}'] = dw + self.reg * self.params[f'W{num}']
             grads[f'b{num}'] = db
 
