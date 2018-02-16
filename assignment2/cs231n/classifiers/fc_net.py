@@ -259,12 +259,11 @@ class FullyConnectedNet(object):
             if self.use_batchnorm:
                 gamma = self.params[f'gamma{num}']
                 beta = self.params[f'beta{num}']
-                out, cache = affine_relu_bn_forward(
+                out, cache = affine_relu_forward(
                     out, W, b, gamma, beta, self.bn_params[num - 1])
             else:
                 out, cache = affine_relu_forward(out, W, b)
             cache_list.append(cache)
-            # print(num, out.shape)
         num_last = self.num_layers
         W, b = self.params[f'W{num_last}'], self.params[f'b{num_last}']
         scores, cache = affine_forward(out, W, b)
@@ -301,16 +300,15 @@ class FullyConnectedNet(object):
         grads[f'b{num_last}'] = db
 
         for num in range(self.num_layers - 1, 0, -1):
+            out_back = affine_relu_backward(
+                dout, cache_list[num - 1], batchnorm=self.use_batchnorm)
             if self.use_batchnorm:
-                dout, dw, db, dgamma, dbeta = affine_relu_bn_backward(
-                    dout, cache_list[num - 1])
-                grads[f'gamma{num}'] = dgamma               
-                grads[f'beta{num}'] = dbeta     
-            else:
-                dout, dw, db = affine_relu_backward(dout, cache_list[num - 1])
+                grads[f'gamma{num}'] = out_back['dgamma']               
+                grads[f'beta{num}'] = out_back['dbeta']     
+            dout = out_back['dx']
 
-            grads[f'W{num}'] = dw + self.reg * self.params[f'W{num}']
-            grads[f'b{num}'] = db
+            grads[f'W{num}'] = out_back['dw'] + self.reg * self.params[f'W{num}']
+            grads[f'b{num}'] = out_back['db']
 
         ############################################################################
         #                             END OF YOUR CODE                             #

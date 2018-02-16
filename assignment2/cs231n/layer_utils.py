@@ -3,7 +3,7 @@ from cs231n.layers import *
 from cs231n.fast_layers import *
 
 
-def affine_relu_forward(x, w, b):
+def affine_relu_forward(x, w, b, gamma=None, beta=None, bn_param=None):
     """
     Convenience layer that perorms an affine transform followed by a ReLU
 
@@ -15,52 +15,34 @@ def affine_relu_forward(x, w, b):
     - out: Output from the ReLU
     - cache: Object to give to the backward pass
     """
-    a, fc_cache = affine_forward(x, w, b)
-    out, relu_cache = relu_forward(a)
-    cache = (fc_cache, relu_cache)
+    out, fc_cache = affine_forward(x, w, b)
+    cache = {}
+    cache['fc_cache'] = fc_cache
+    if bn_param:
+        out, bn_cache = batchnorm_forward(out, gamma, beta, bn_param)
+        cache['bn_cache'] = bn_cache
+
+    out, relu_cache = relu_forward(out)
+    cache['relu_cache'] = relu_cache
     return out, cache
 
 
-def affine_relu_backward(dout, cache):
+def affine_relu_backward(dout, cache, batchnorm=False, dropout=False):
     """
     Backward pass for the affine-relu convenience layer
     """
-    fc_cache, relu_cache = cache
-    da = relu_backward(dout, relu_cache)
-    dx, dw, db = affine_backward(da, fc_cache)
-    return dx, dw, db
+    out_back = {}
+    dout = relu_backward(dout, cache['relu_cache'])
+    if batchnorm:
+        dout, dgamma, dbeta = batchnorm_backward(dout, cache['bn_cache'])
+        out_back['dgamma'] = dgamma
+        out_back['dbeta'] = dbeta
 
-
-def affine_relu_bn_forward(x, w, b, gamma, beta, bn_param):
-    """
-    Convenience layer that perorms an affine transform followed by a ReLU
-
-    Inputs:
-    - x: Input to the affine layer
-    - w, b: Weights for the affine layer
-
-    Returns a tuple of:
-    - out: Output from the ReLU
-    - cache: Object to give to the backward pass
-    """
-    a, fc_cache = affine_forward(x, w, b)
-    bn_out, bn_cache = batchnorm_forward(a, gamma, beta, bn_param)
-    out, relu_cache = relu_forward(bn_out)
-    cache = (fc_cache, bn_cache, relu_cache)
-    # print(out.shape)
-    return out, cache
-
-
-def affine_relu_bn_backward(dout, cache):
-    """
-    Backward pass for the affine-relu convenience layer
-    """
-    fc_cache, bn_cache, relu_cache = cache
-    # print('dout', dout.shape)
-    da = relu_backward(dout, relu_cache)
-    dbn, dgamma, dbeta = batchnorm_backward(da, bn_cache)
-    dx, dw, db = affine_backward(dbn, fc_cache)
-    return dx, dw, db, dgamma, dbeta
+    dx, dw, db = affine_backward(dout, cache['fc_cache'])
+    out_back['dx'] = dx
+    out_back['dw'] = dw
+    out_back['db'] = db
+    return out_back
 
 
 def conv_relu_forward(x, w, b, conv_param):
