@@ -119,7 +119,7 @@ class TwoLayerNet(object):
         grads['b1'] = db1
         grads['W2'] = dw2 + self.reg * self.params['W2']
         grads['b2'] = db2
-        
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -221,7 +221,6 @@ class FullyConnectedNet(object):
         for k, v in self.params.items():
             self.params[k] = v.astype(dtype)
 
-
     def loss(self, X, y=None):
         """
         Compute loss and gradient for the fully-connected net.
@@ -260,9 +259,11 @@ class FullyConnectedNet(object):
                 gamma = self.params[f'gamma{num}']
                 beta = self.params[f'beta{num}']
                 out, cache = affine_relu_forward(
-                    out, W, b, gamma, beta, self.bn_params[num - 1])
+                    out, W, b, gamma, beta, self.bn_params[num - 1],
+                    dropout_param=self.dropout_param)
             else:
-                out, cache = affine_relu_forward(out, W, b)
+                out, cache = affine_relu_forward(
+                    out, W, b, dropout_param=self.dropout_param)
             cache_list.append(cache)
         num_last = self.num_layers
         W, b = self.params[f'W{num_last}'], self.params[f'b{num_last}']
@@ -301,7 +302,8 @@ class FullyConnectedNet(object):
 
         for num in range(self.num_layers - 1, 0, -1):
             out_back = affine_relu_backward(
-                dout, cache_list[num - 1], batchnorm=self.use_batchnorm)
+                dout, cache_list[num - 1], batchnorm=self.use_batchnorm,
+                dropout=self.use_dropout)
             if self.use_batchnorm:
                 grads[f'gamma{num}'] = out_back['dgamma']               
                 grads[f'beta{num}'] = out_back['dbeta']     
