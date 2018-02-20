@@ -1,5 +1,6 @@
 # from builtins import range
 import numpy as np
+import itertools as it
 
 
 def affine_forward(x, w, b):
@@ -385,7 +386,7 @@ def conv_forward_naive(x, w, b, conv_param):
 
     The input consists of N data points, each with C channels, height H and
     width W. We convolve each input with F different filters, where each filter
-    spans all C channels and has height HH and width HH.
+    spans all C channels and has height HH and width WW.
 
     Input:
     - x: Input data of shape (N, C, H, W)
@@ -407,7 +408,35 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    H = x.shape[2]
+    W = x.shape[3]
+    HH = w.shape[2]
+    WW = w.shape[3]
+    step_h = HH // 2
+    h_res = HH % 2
+    step_w = WW // 2
+    w_res = WW % 2
+
+    arg_cents = list(it.product(range(step_h, H + step_h, stride),
+                                range(step_w, W + step_w, stride)))
+    H_conv = int(1 + (H + 2 * pad - HH) / stride)
+    W_conv = int(1 + (W + 2 * pad - WW) / stride)
+    out = []
+    for cur_x in x:
+        x_pad = np.pad(cur_x, (pad, pad), 'constant', constant_values=0)[pad: -pad]
+        convs = []
+        for f, bias in zip(w, b):
+            conv_out = []
+            for c in arg_cents:
+                conv = (np.sum(f * x_pad[:, c[0] - step_h: c[0] + step_h + h_res,
+                                         c[1] - step_w: c[1] + step_w + w_res]) + bias)
+                conv_out.append(conv)
+            conv_out = np.array(conv_out).reshape(H_conv, W_conv)
+            convs.append(conv_out)
+        out.append(np.array(convs))
+    out = np.array(out)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
