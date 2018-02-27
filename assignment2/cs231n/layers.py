@@ -461,7 +461,57 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    # - x: Input data of shape(N, C, H, W)
+    # - w: Filter weights of shape(F, C, HH, WW)
+    # - b: Biases, of shape(F,)
+    x, w, b, conv_param = cache
+
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    H = x.shape[2]
+    W = x.shape[3]
+    HH = w.shape[2]
+    WW = w.shape[3]
+    step_h = HH // 2
+    h_res = HH % 2
+    step_w = WW // 2
+    w_res = WW % 2
+
+    arg_cents = list(it.product(range(step_h, H + step_h, stride),
+                                range(step_w, W + step_w, stride)))
+    out = []
+    for cur_x, cur_dx in zip(x, dout):
+        x_pad = np.pad(cur_x, (pad, pad), 'constant',
+                       constant_values=0)[pad: -pad]
+        dx_pad = np.pad(cur_dx, (pad, pad), 'constant',
+                        constant_values=0)[pad: -pad]
+        new_dx = np.zeros_like(x_pad)
+        for num_filt, f in enumerate(w):
+            qq = np.zeros_like(cur_x)
+            for c in arg_cents:
+                new_dx[:, c[0] - step_h: c[0] + step_h + h_res,
+                       c[1] - step_w: c[1] + step_w + w_res] += f * dx_pad[num_filt, c[0], c[1]]
+            qq += new_dx[:, step_h: H + step_h, step_w: W + step_w]
+        out.append(qq)
+    out_x = np.array(out)
+
+    out = []
+    for num_filt, f in enumerate(w):
+        qq = np.zeros_like(f)
+        for cur_x, cur_dx in zip(x, dout):
+            x_pad = np.pad(cur_x, (pad, pad), 'constant',
+                           constant_values=0)[pad: -pad]
+            dx_pad = np.pad(cur_dx, (pad, pad), 'constant',
+                            constant_values=0)[pad: -pad]
+            for c in arg_cents:
+                qq += x_pad[:, c[0] - step_h: c[0] + step_h + h_res,
+                            c[1] - step_w: c[1] + step_w + w_res] * dx_pad[num_filt, c[0], c[1]]
+        out.append(qq)
+    out_w = np.array(out)
+
+    dx = out_x
+    dw = out_w
+    db = dout.sum(axis=0).sum(axis=1).sum(axis=1)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
