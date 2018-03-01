@@ -537,11 +537,30 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    pool_height = pool_param['pool_height']
+    pool_width = pool_param['pool_width']
+    stride = pool_param['stride']
+    H2 = int((H - pool_height) / stride + 1)
+    W2 = int((W - pool_width) / stride + 1)
+
+    out = np.zeros((N, C, H2, W2))
+    amax = np.zeros((H2, W2, N, C), dtype=int)
+    for h in range(H2):
+        for w in range(W2):
+            h_idx_min = pool_height * h
+            h_idx_max = pool_height * h + pool_height
+            w_idx_min = pool_width * w
+            w_idx_max = pool_width * w + pool_width
+            x_current = x[:, :, h_idx_min: h_idx_max, w_idx_min: w_idx_max]
+            out[:, :, h, w] = x_current.max(axis=2).max(axis=2)
+            amax_current = x_current.reshape(N, C, pool_height + pool_width).argmax(axis=2)
+            amax[h, w] = amax_current
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    cache = (x, pool_param)
+    cache = (x, pool_param, amax)
     return out, cache
 
 
@@ -560,7 +579,27 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    x, pool_param, amax = cache
+    N, C, H, W = x.shape
+
+    pool_height = pool_param['pool_height']
+    pool_width = pool_param['pool_width']
+    _, _, H2, W2 = dout.shape
+
+    out = np.zeros((N, C, H, W))
+    for h in range(H2):
+        for w in range(W2):
+            h_idx_min = pool_height * h
+            h_idx_max = pool_height * h + pool_height
+            w_idx_min = pool_width * w
+            w_idx_max = pool_width * w + pool_width
+            out_current = np.zeros((N * C, pool_height * pool_width))
+            out_current[range(len(out_current)), amax[h, w].flatten()] = dout[:, :, h, w].flatten()
+
+            out[:, :, h_idx_min: h_idx_max, w_idx_min: w_idx_max] = out_current.reshape(
+                N, C, pool_height, pool_width)
+    dx = out
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
