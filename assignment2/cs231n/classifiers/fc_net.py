@@ -303,7 +303,7 @@ class FullyConnectedNet(object):
         for num in range(self.num_layers - 1, 0, -1):
             out_back = affine_relu_backward(
                 dout, cache_list[num - 1], batchnorm=self.use_batchnorm,
-                dropout=self.use_dropout)
+                dropout=self.use_dropout, return_dict=True)
             if self.use_batchnorm:
                 grads[f'gamma{num}'] = out_back['dgamma']               
                 grads[f'beta{num}'] = out_back['dbeta']     

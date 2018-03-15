@@ -29,7 +29,8 @@ def affine_relu_forward(x, w, b, gamma=None, beta=None, bn_param=None,
     return out, cache
 
 
-def affine_relu_backward(dout, cache, batchnorm=False, dropout=False):
+def affine_relu_backward(dout, cache, batchnorm=False, dropout=False, 
+                         return_dict=False):
     """
     Backward pass for the affine-relu convenience layer
     """
@@ -44,9 +45,11 @@ def affine_relu_backward(dout, cache, batchnorm=False, dropout=False):
         out_back['dgamma'] = dgamma
         out_back['dbeta'] = dbeta
 
-
-
     dx, dw, db = affine_backward(dout, cache['fc_cache'])
+
+    if not return_dict:
+        return dx, dw, db
+
     out_back['dx'] = dx
     out_back['dw'] = dw
     out_back['db'] = db
