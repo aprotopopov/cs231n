@@ -61,23 +61,13 @@ target/
 # CSV files
 *.csv
 
-# lifetimes datasets
-ds/modules/churn/lifetimes/datasets/*
-ds/models/churn/lifetimes/datasets/*.txt
+# Datasets directories
+*/cs231n/datasets/*
 
-# exclude save models
-ds/models/churn_rfm/models_saved/*.pkl
-
-# Recommended ignore rules for files generated or used by the Hadoop Plugin
-.azkabanPlugin.json
-.hadoopValidatorProperties
-azkaban
-
-# Ignore gradle specific files
-/**/.gradle/*
 
 # Visual Studio Code files
 .vscode/*
 
 # Png files from reports for plots
 *.png
+
