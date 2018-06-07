@@ -137,7 +137,35 @@ class CaptioningRNN(object):
         # defined above to store loss and gradients; grads[k] should give the      #
         # gradients for self.params[k].                                            #
         ############################################################################
-        pass
+        h0, cache_affine = affine_forward(features, W_proj, b_proj)
+        word_embeddings, cache_word_embedding = word_embedding_forward(
+            captions_in, W_embed)
+
+        if self.cell_type == 'rnn':
+            h, cache_rnn = rnn_forward(word_embeddings, h0, Wx, Wh, b)
+
+        out, cache_temporal = temporal_affine_forward(
+            h, W_vocab, b_vocab)
+
+        loss, dout = temporal_softmax_loss(out, captions_out, mask)
+
+        # gradients
+        dh, dw_vocab, db_vocab = temporal_affine_backward(dout, cache_temporal)
+        grads['W_vocab'] = dw_vocab
+        grads['b_vocab'] = db_vocab
+
+        dx, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        grads['Wx'] = dWx
+        grads['Wh'] = dWh
+        grads['b'] = db
+
+        dW_embed = word_embedding_backward(dx, cache_word_embedding)
+        grads['W_embed'] = dW_embed
+
+        _, dw_proj, db_proj = affine_backward(dh0, cache_affine)
+        grads['W_proj'] = dw_proj
+        grads['b_proj'] = db_proj
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -199,7 +227,19 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+        if self.cell_type == 'rnn':
+            h0, _ = affine_forward(features, W_proj, b_proj)
+            word = self._start * np.ones(N, dtype=np.int16)
+            for i in range(max_length):
+                word_embedding, _ = word_embedding_forward(word, W_embed)
+                h, _ = rnn_step_forward(word_embedding, h0, Wx, Wh, b)
+                h0 = h
+                out, _ = affine_forward(h, W_vocab, b_vocab)
+                word = out.argmax(axis=1)
+                if (word == self._null).all():
+                    break
+            
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

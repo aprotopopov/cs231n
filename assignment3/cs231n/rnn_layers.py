@@ -181,7 +181,8 @@ def word_embedding_forward(x, W):
     #                                                                            #
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
-    pass
+    out = W[x]
+    cache = x, W, out
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -210,7 +211,9 @@ def word_embedding_backward(dout, cache):
     # Note that Words can appear more than once in a sequence.                   #
     # HINT: Look up the function np.add.at                                       #
     ##############################################################################
-    pass
+    x, W, out = cache
+    dW = np.zeros_like(W)
+    np.add.at(dW, x, dout)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -256,7 +259,17 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     # TODO: Implement the forward pass for a single timestep of an LSTM.        #
     # You may want to use the numerically stable sigmoid implementation above.  #
     #############################################################################
-    pass
+    N, H = prev_h.shape
+    val = x.dot(Wx) + prev_h.dot(Wh) + b
+    i_gate = sigmoid(val[:, :H])
+    f_gate = sigmoid(val[:, H: 2 * H])
+    o_gate = sigmoid(val[:, 2 * H: 3 * H])
+    g_gate = np.tanh(val[:, 3 * H:])
+    next_c = f_gate * prev_c + i_gate * g_gate
+    tanh_c = np.tanh(next_c)
+    next_h = o_gate * tanh_c
+    cache = prev_h, prev_c, val, i_gate, f_gate, o_gate, g_gate, next_h, \
+        next_c, x, Wx, Wh, b, tanh_c
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -288,7 +301,34 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
     # the output value from the nonlinearity.                                   #
     #############################################################################
-    pass
+    prev_h, prev_c, val, i_gate, f_gate, o_gate, g_gate, next_h, next_c, \
+        x, Wx, Wh, b, tanh_c = cache
+    N, D = x.shape
+    _, H = prev_h.shape
+
+    dnext_c_h = dnext_h * (1 - tanh_c**2) * o_gate
+    dnext_c_full = (dnext_c + dnext_c_h)
+    dprev_c = dnext_c_full * f_gate
+
+    do_gate = dnext_h * tanh_c
+    dval_o_gate = do_gate * o_gate * (1 - o_gate)
+
+    df_gate = dnext_c_full * prev_c
+    dval_f_gate = df_gate * f_gate * (1 - f_gate)
+
+    di_gate = dnext_c_full * g_gate
+    dval_i_gate = di_gate * i_gate * (1 - i_gate)
+
+    dg_gate = dnext_c_full * i_gate
+    dval_g_gate = dg_gate * (1 - g_gate ** 2)
+
+    dval = np.concatenate(
+        [dval_i_gate, dval_f_gate, dval_o_gate, dval_g_gate], axis=1)
+    dx = dval.dot(Wx.T)
+    dWx = x.T.dot(dval)
+    dprev_h = dval.dot(Wh.T)
+    dWh = prev_h.T.dot(dval)
+    db = dval.sum(axis=0)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
