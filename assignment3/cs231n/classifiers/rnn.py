@@ -143,6 +143,8 @@ class CaptioningRNN(object):
 
         if self.cell_type == 'rnn':
             h, cache_rnn = rnn_forward(word_embeddings, h0, Wx, Wh, b)
+        elif self.cell_type == 'lstm':
+            h, cache_lstm = lstm_forward(word_embeddings, h0, Wx, Wh, b)
 
         out, cache_temporal = temporal_affine_forward(
             h, W_vocab, b_vocab)
@@ -154,7 +156,10 @@ class CaptioningRNN(object):
         grads['W_vocab'] = dw_vocab
         grads['b_vocab'] = db_vocab
 
-        dx, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        if self.cell_type == 'rnn':
+            dx, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        elif self.cell_type == 'lstm':
+            dx, dh0, dWx, dWh, db = lstm_backward(dh, cache_lstm)
         grads['Wx'] = dWx
         grads['Wh'] = dWh
         grads['b'] = db
@@ -227,19 +232,24 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        if self.cell_type == 'rnn':
-            h0, _ = affine_forward(features, W_proj, b_proj)
-            word = self._start * np.ones(N, dtype=np.int16)
-            for i in range(max_length):
-                word_embedding, _ = word_embedding_forward(word, W_embed)
+        h0, _ = affine_forward(features, W_proj, b_proj)
+        c0 = np.zeros_like(h0)
+        word = self._start * np.ones(N, dtype=np.int16)
+        for i in range(max_length):
+            word_embedding, _ = word_embedding_forward(word, W_embed)
+            if self.cell_type == 'rnn':
                 h, _ = rnn_step_forward(word_embedding, h0, Wx, Wh, b)
-                h0 = h
-                out, _ = affine_forward(h, W_vocab, b_vocab)
-                word = out.argmax(axis=1)
-                if (word == self._null).all():
-                    break
-            
+            elif self.cell_type == 'lstm':
+                h, c, _ = lstm_step_forward(word_embedding, h0, c0, Wx, Wh, b)
+                c0 = c
 
+            h0 = h
+            out, _ = affine_forward(h, W_vocab, b_vocab)
+            word = out.argmax(axis=1)
+            captions[:, i] = word
+            if (word == self._null).all():
+                break
+            
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
