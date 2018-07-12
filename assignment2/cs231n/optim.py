@@ -66,7 +66,8 @@ def sgd_momentum(w, dw, config=None):
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
     next_v = config['momentum'] * v - config['learning_rate'] * dw.squeeze()
-    w += next_v + config['momentum'] * (next_v - v)
+    # w += next_v + config['momentum'] * (next_v - v)
+    w += next_v
     next_w = w
     ###########################################################################
     #                             END OF YOUR CODE                            #

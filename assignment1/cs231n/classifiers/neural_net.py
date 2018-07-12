@@ -130,7 +130,6 @@ class TwoLayerNet(object):
 
     grads['W2'] = dW2
     grads['b2'] = db2
-    # pass
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -224,9 +223,9 @@ class TwoLayerNet(object):
         idx_epoch = np.random.permutation(num_train)
 
     return {
-      'loss_history': loss_history,
-      'train_acc_history': train_acc_history,
-      'val_acc_history': val_acc_history,
+        'loss_history': loss_history,
+        'train_acc_history': train_acc_history,
+        'val_acc_history': val_acc_history,
     }
 
   def predict(self, X):

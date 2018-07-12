@@ -9,7 +9,7 @@ class KNearestNeighbor(object):
 
   def train(self, X, y):
     """
-    Train the classifier. For k-nearest neighbors this is just 
+    Train the classifier. For k-nearest neighbors this is just
     memorizing the training data.
 
     Inputs:
@@ -20,7 +20,7 @@ class KNearestNeighbor(object):
     """
     self.X_train = X
     self.y_train = y
-    
+
   def predict(self, X, k=1, num_loops=0):
     """
     Predict labels for test data using this classifier.
@@ -34,7 +34,7 @@ class KNearestNeighbor(object):
 
     Returns:
     - y: A numpy array of shape (num_test,) containing predicted labels for the
-      test data, where y[i] is the predicted label for the test point X[i].  
+      test data, where y[i] is the predicted label for the test point X[i].
     """
     if num_loops == 0:
       dists = self.compute_distances_no_loops(X)
@@ -173,4 +173,3 @@ class KNearestNeighbor(object):
       #########################################################################
 
     return y_pred
-

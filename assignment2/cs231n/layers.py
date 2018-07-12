@@ -60,7 +60,6 @@ def affine_backward(dout, cache):
     dx = dout.dot(w.T).reshape(x.shape)
     dw = x_reshaped.T.dot(dout)
     db = dout.sum(axis=0, keepdims=True)
-    pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -486,31 +485,32 @@ def conv_backward_naive(dout, cache):
                         constant_values=0)[pad: -pad]
         new_dx = np.zeros_like(x_pad)
         for num_filt, f in enumerate(w):
-            qq = np.zeros_like(cur_x)
+            filt = np.zeros_like(cur_x)
             for c in arg_cents:
+                add_val = f * dx_pad[num_filt, c[0] // stride, c[1] // stride]
                 new_dx[:, c[0] - step_h: c[0] + step_h + h_res,
-                    c[1] - step_w: c[1] + step_w + w_res] += f * dx_pad[num_filt, c[0]//stride, c[1]//stride]
-            qq += new_dx[:, step_h: H + step_h, step_w: W + step_w]
-        out.append(qq)
+                       c[1] - step_w: c[1] + step_w + w_res] += add_val
+            filt += new_dx[:, step_h: H + step_h, step_w: W + step_w]
+        out.append(filt)
     out_x = np.array(out)
 
     out = []
     for num_filt, f in enumerate(w):
-        qq = np.zeros_like(f)
+        filt = np.zeros_like(f)
         for cur_x, cur_dx in zip(x, dout):
             x_pad = np.pad(cur_x, (pad, pad), 'constant',
                            constant_values=0)[pad: -pad]
             dx_pad = np.pad(cur_dx, (pad, pad), 'constant',
                             constant_values=0)[pad: -pad]
             for c in arg_cents:
-                qq += x_pad[:, c[0] - step_h: c[0] + step_h + h_res,
-                            c[1] - step_w: c[1] + step_w + w_res] * dx_pad[num_filt, c[0]//stride, c[1]//stride]
-        out.append(qq)
+                filt += (x_pad[:, c[0] - step_h: c[0] + step_h + h_res,
+                               c[1] - step_w: c[1] + step_w + w_res] *
+                         dx_pad[num_filt, c[0] // stride, c[1] // stride])
+        out.append(filt)
     out_w = np.array(out)
 
     dx = out_x
     dw = out_w
-    # db = dout.sum(axis=0).sum(axis=1).sum(axis=1)
     db = dout.sum(axis=(0, 2, 3))
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -552,10 +552,12 @@ def max_pool_forward_naive(x, pool_param):
             h_idx_max = pool_height * h + pool_height
             w_idx_min = pool_width * w
             w_idx_max = pool_width * w + pool_width
+            
             x_current = x[:, :, h_idx_min: h_idx_max, w_idx_min: w_idx_max]
-            # out[:, :, h, w] = x_current.max(axis=2).max(axis=2)
             out[:, :, h, w] = x_current.max(axis=(2, 3))
-            amax_current = x_current.reshape(N, C, pool_height + pool_width).argmax(axis=2)
+            
+            pool_total = pool_height + pool_width
+            amax_current = x_current.reshape(N, C, pool_total).argmax(axis=2)
             amax[h, w] = amax_current
 
     ###########################################################################
@@ -595,10 +597,11 @@ def max_pool_backward_naive(dout, cache):
             w_idx_min = pool_width * w
             w_idx_max = pool_width * w + pool_width
             out_current = np.zeros((N * C, pool_height * pool_width))
-            out_current[range(len(out_current)), amax[h, w].flatten()] = dout[:, :, h, w].flatten()
+            out_current[range(len(out_current)), amax[h, w].flatten()] = \
+                dout[:, :, h, w].flatten()
 
-            out[:, :, h_idx_min: h_idx_max, w_idx_min: w_idx_max] = out_current.reshape(
-                N, C, pool_height, pool_width)
+            out[:, :, h_idx_min: h_idx_max, w_idx_min: w_idx_max] = \
+                out_current.reshape(N, C, pool_height, pool_width)
     dx = out
 
     ###########################################################################

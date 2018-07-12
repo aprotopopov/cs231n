@@ -109,8 +109,8 @@ class TwoLayerNet(object):
         ############################################################################
         pass
         loss, dout = softmax_loss(scores, y)
-        # print(loss)
-        loss += 0.5 * self.reg * (np.sum(self.params['W1']**2) + np.sum(self.params['W2']**2))
+        loss += (0.5 * self.reg * (np.sum(self.params['W1']**2) +
+                 np.sum(self.params['W2']**2)))
 
         dx2, dw2, db2 = affine_backward(dout, cache2)
         dx1, dw1, db1 = affine_relu_backward(dx2, cache)
@@ -215,7 +215,8 @@ class FullyConnectedNet(object):
         # pass of the second batch normalization layer, etc.
         self.bn_params = []
         if self.use_batchnorm:
-            self.bn_params = [{'mode': 'train'} for i in range(self.num_layers - 1)]
+            self.bn_params = [
+                {'mode': 'train'} for i in range(self.num_layers - 1)]
 
         # Cast all parameters to the correct datatype
         for k, v in self.params.items():

@@ -2,8 +2,6 @@ import numpy as np
 from random import shuffle
 from six.moves import xrange
 
-def softmax(i, classes):
-  return classes[i] / np.sum(classes)
 
 def softmax_loss_naive(W, X, y, reg):
   """
@@ -40,7 +38,6 @@ def softmax_loss_naive(W, X, y, reg):
 
   for i in xrange(num_train):
     classes = np.exp(X[i].dot(W) + log_c)
-    # loss += -np.log(softmax(y[i], classes))
     loss += -np.log(classes[y[i]] / np.sum(classes))
     for j in xrange(num_classes):
       if y[i] == j:

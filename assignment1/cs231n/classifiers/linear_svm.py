@@ -84,6 +84,18 @@ def svm_loss_vectorized(W, X, y, reg):
   margins = np.maximum(0, scores - correct_class_score[:, None] + 1)
   margins[idx_train, y] = 0
   loss = np.sum(margins)
+  # Add regularization to the loss.
+  loss += reg * np.sum(W * W)
+
+  #############################################################################
+  # TODO:                                                                     #
+  # Implement a vectorized version of the gradient for the structured SVM     #
+  # loss, storing the result in dW.                                           #
+  #                                                                           #
+  # Hint: Instead of computing the gradient from scratch, it may be easier    #
+  # to reuse some of the intermediate values that you used to compute the     #
+  # loss.                                                                     #
+  #############################################################################
 
   ##################
   # with cycles for class for grad
@@ -107,25 +119,7 @@ def svm_loss_vectorized(W, X, y, reg):
   loss /= num_train
   dW /= num_train
 
-  # Add regularization to the loss.
-  loss += reg * np.sum(W * W)
+  # Add regularization.
   dW += reg * W
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
-
-  #############################################################################
-  # TODO:                                                                     #
-  # Implement a vectorized version of the gradient for the structured SVM     #
-  # loss, storing the result in dW.                                           #
-  #                                                                           #
-  # Hint: Instead of computing the gradient from scratch, it may be easier    #
-  # to reuse some of the intermediate values that you used to compute the     #
-  # loss.                                                                     #
-  #############################################################################
-  # pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
 
   return loss, dW
